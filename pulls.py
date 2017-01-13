@@ -118,6 +118,72 @@ class PullRequestReporter(object):
             row.age.days, row.lastmod.days)
         return (summary_text, summary_html)
 
+    def _fetch_events(self, github_repo, pull):
+        all_events = []
+        page = 1
+        while True:
+            events_url = "https://api.github.com/repos/%s/issues/%d/events?page=%d" % (
+                github_repo, pull['number'], page)
+            retcode = self.session.get(events_url, \
+                headers={'Accept':'application/vnd.github.black-cat-preview+json'})
+            events = json.loads(retcode.text or retcode.content)
+            if self.verbose:
+                print "Processing %d events" % len(events)
+            for event in events:
+                actor = event['actor']['login']
+                action = event['event']
+                event_time = datetime.strptime(event['created_at'], "%Y-%m-%dT%H:%M:%SZ")
+                all_events.append((actor, action, event_time))
+            if len(events) < 30:
+                break
+            page += 1
+        return all_events
+
+    def _fetch_reviews(self, github_repo, pull):
+        all_events = []
+        page = 1
+        while True:
+            reviews_url = "https://api.github.com/repos/%s/pulls/%d/reviews?page=%d" % (
+                github_repo, pull['number'], page)
+            retcode = self.session.get(reviews_url, \
+                headers={'Accept':'application/vnd.github.black-cat-preview+json'})
+            reviews = json.loads(retcode.text or retcode.content)
+            if self.verbose:
+                print "Processing %d reviews" % len(reviews)
+            cpage = 1
+            for review in reviews:
+                body = review['body']
+                mentions = re.findall(r"@(\w+)", body)
+                mention_time = datetime.strptime(review['submitted_at'], "%Y-%m-%dT%H:%M:%SZ")
+                for mention in mentions:
+                    all_events.append((mention, "mentioned", mention_time))
+                # Comments on reviews can also have mentions in...
+                review_id = review['id']
+                comments_url = \
+                    "https://api.github.com/repos/%s/pulls/%d/reviews/%d/comments?page=%d" % \
+                    (github_repo, pull['number'], review_id, cpage)
+                retcode = self.session.get(comments_url, \
+                    headers={'Accept':'application/vnd.github.black-cat-preview+json'})
+                comments = json.loads(retcode.text or retcode.content)
+                if self.verbose:
+                    print "Processing %d review comments" % len(comments)
+                for comment in comments:
+                    body = comment['body']
+                    mentions = re.findall(r"@(\w+)", body)
+                    comment_time = datetime.strptime(comment['created_at'], "%Y-%m-%dT%H:%M:%SZ")
+                    if 'modified_at' in comment:
+                        comment_time = datetime.strptime(review.get('modified_at'),
+                                                         "%Y-%m-%dT%H:%M:%SZ")
+                    for mention in mentions:
+                        all_events.append((mention, "mentioned", comment_time))
+                if len(comments) < 30:
+                    break
+                cpage += 1
+            if len(reviews) < 30:
+                break
+            page += 1
+        return all_events
+
     def _fetch_repo(self, repo_id, github_repo, summaries):
         retcode = self.session.get('https://api.github.com/repos/%s/pulls' % github_repo)
         if retcode.ok:
@@ -133,8 +199,6 @@ class PullRequestReporter(object):
                 if self.verbose:
                     print "Processing pull request %s" % pull['number']
                 creator = pull['user']['login']
-                owner = None
-                last_mentioned = None
                 user_id_list = [creator]
                 created = datetime.strptime(pull['created_at'], "%Y-%m-%dT%H:%M:%SZ")
                 if 'modified_at' in pull:
@@ -142,36 +206,29 @@ class PullRequestReporter(object):
                         pull.get('modified_at'), "%Y-%m-%dT%H:%M:%SZ")
                 else:
                     lastmodified = created
-                page = 1
-                while True:
-                    events_url = "https://api.github.com/repos/%s/issues/%d/events?page=%d" % (
-                        github_repo, pull['number'], page)
-                    retcode = self.session.get(events_url)
-                    events = json.loads(retcode.text or retcode.content)
-                    lastevent = created
+                events = self._fetch_events(github_repo, pull) + \
+                         self._fetch_reviews(github_repo, pull)
+                events.sort(key=lambda x: x[2])  # Sort by event time
+                owner = None
+                last_mentioned = None
+                lastevent = created
+                for actor, action, lastevent in events:
+                    if action == "unassigned":
+                        owner = None
+                    elif action == "assigned":
+                        owner = actor
+                    elif action == "mentioned":
+                        last_mentioned = actor
                     if self.verbose:
-                        print "Processing %d events" % len(events)
-                    for event in events:
-                        actor = event['actor']['login']
-                        action = event['event']
-                        lastevent = datetime.strptime(event['created_at'], "%Y-%m-%dT%H:%M:%SZ")
-                        if action == "unassigned":
-                            owner = None
-                        elif action == "assigned":
-                            owner = actor
-                        elif action == "mentioned":
-                            last_mentioned = actor
-                        if self.verbose:
-                            print "Processing event %s %s %s" % (action, actor, event['created_at'])
-                        if not actor in user_id_list:
-                            user_id_list.append(actor)
-                    if len(events) < 30:
-                        break
-                    page += 1
+                        print "Processing event %s %s" % (action, actor)
+                    if not actor in user_id_list:
+                        user_id_list.append(actor)
                 owner = owner or last_mentioned or creator
                 user_id_list.remove(owner)
                 if lastevent > lastmodified:
                     lastmodified = lastevent
+                if self.verbose:
+                    print "Owner %s" % owner
                 summaries.append(Summary(repo=repo_id,
                                          id=pull['number'], url=pull['html_url'],
                                          ref=pull['base']['ref'], title=pull['title'],
@@ -287,8 +344,8 @@ The full list of pull requests is as follows:
             msg.attach(MIMEText(text, 'plain'))
             msg.attach(MIMEText(html, 'html'))
             gmail.sendmail(msg['From'], msg['To'], msg.as_string())
-        else:
-            print html
+        #else:
+            #print html
 
     def generate_all(self, for_user=None):
         """ Generate and optionally email reports """
