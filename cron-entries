@@ -1,3 +1,3 @@
-*/10 * * * * exec /home/rchapman/jira/restartJirabot.sh &
-0 0 * * * /home/rchapman/jira/sendPullEmails.sh
+*/10 * * * * exec /home/rchapman/jirabot/restartJirabot.sh &
+0 0 * * * /home/rchapman/jirabot/sendPullEmails.sh
 
