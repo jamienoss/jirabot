@@ -344,8 +344,8 @@ The full list of pull requests is as follows:
             msg.attach(MIMEText(text, 'plain'))
             msg.attach(MIMEText(html, 'html'))
             gmail.sendmail(msg['From'], msg['To'], msg.as_string())
-        #else:
-            #print html
+        else:
+            print html
 
     def generate_all(self, for_user=None):
         """ Generate and optionally email reports """
