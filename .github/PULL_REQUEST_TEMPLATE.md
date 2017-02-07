@@ -1,37 +1,49 @@
-<!--- Provide a general summary of your changes in the Title above -->
+! Thank you for submitting a pull request to the HPCC project
+! PLEASE READ the following before proceeding.
+! Lines beginning with ! below should be deleted from the comment before you submit.
+! Other lines should be modified appropriately and left in place.
 
-## Description
-<!--- Describe your changes in detail -->
+! This project only accepts pull requests related to open JIRA issues.
+! If suggesting a new feature or change, please discuss it in a JIRA issue first.
+! If fixing a bug, there should be an issue describing it with steps to reproduce.
+! The title line of the pull request (and of each commit within it) should refer to the
+! associated issue using the format:
 
-## Related Issue
-<!--- This project only accepts pull requests related to open issues -->
-<!--- If suggesting a new feature or change, please discuss it in an issue first -->
-<!--- If fixing a bug, there should be an issue describing it with steps to reproduce -->
-<!--- Please link to the issue here: -->
+! HPCC-nnnnn Short description of issue
 
-## Motivation and Context
-<!--- Why is this change required? What problem does it solve? -->
+! This will allow the Jira ticket to be automatically updated to refer to this pull request, and
+! will ensure that the automatically-generated changelog is properly formatted.
+! Where a pull request contains a single commit the pull request title will be set correctly automatically,
+! assuming that the commit has followed the proper guidelines.
 
-## How Has This Been Tested?
-<!--- Please describe in detail how you tested your changes. -->
-<!--- Include details of your testing environment, and the tests you ran to -->
-<!--- see how your change affects other areas of the code, etc. -->
-
-## Screenshots (if appropriate):
-
-## Types of changes
-<!--- What types of changes does your code introduce? Put an `x` in all the boxes that apply: -->
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-
+! Please go over all the following points, and put an `x` in all the boxes that apply.
 ## Checklist:
-<!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
-<!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
-- [ ] My code follows the code style of this project.
-- [ ] My change requires a change to the documentation.
-- [ ] I have updated the documentation accordingly.
-- [ ] I have read the **CONTRIBUTING** document.
-- [ ] I have added tests to cover my changes.
-- [ ] All new and existing tests passed.
+[ ] This change is a bug fix (non-breaking change which fixes an issue).
+[ ] This change is a new feature (non-breaking change which adds functionality).
+[ ] This change is a breaking change (fix or feature that would cause existing functionality to change).
+[ ] The target branch of this pull request is appropriate for such a change.
+[ ] My code follows the code style of this project.
+  [ ] My code does not create any new warnings from compiler, build system, or lint.
+[ ] My change requires a change to the documentation.
+  [ ] I have updated the documentation accordingly, or...
+  [ ] I have created a JIRA ticket to update the documentation.
+[ ] Any new interfaces or exported functions are appropriately commented.
+[ ] I have read the CONTRIBUTING document.
+[ ] I have added tests to cover my changes.
+[ ] All new and existing tests passed.
+[ ] I have checked that this change does not introduce memory leaks.
+[ ] I have used Valgrind or similar tools to check for potential issues.
+[ ] I have given due consideration to all of the following potential concerns:
+  [ ] Scalability
+  [ ] Performance
+  [ ] Security
+  [ ] Premature optimization
+  [ ] This change fixes the problem, not just the symptom
+[ ] There are no similar instances of the same problem that should be addressed
+  [ ] I have addressed them here
+  [ ] I have raised JIRA issues to address them separately
 
+## Testing:
+! Please describe how this change has been tested.
+
+! Thank you for taking the time to submit this pull request and to answer all of the above!
